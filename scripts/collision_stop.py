@@ -43,7 +43,7 @@ class BasicObstacle(Node):
         )
 
     def lidar_callback(self, scan_data: LaserScan):
-        #Constructing collision zone
+        #Constructing collision zone (Tume these)
         collision_left = scan_data.ranges[0:19] 
         collision_right = scan_data.ranges[-18:] 
         collision_zone = np.array(collision_right + collision_left) #Convert to array rather then list
