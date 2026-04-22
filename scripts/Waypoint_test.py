@@ -118,9 +118,9 @@ class MoveWaypoint(Node):
 
 def main(args=None): 
     rclpy.init(args=args)
-    my_simple_publisher = SimplePublisher()
-    rclpy.spin(my_simple_publisher)
-    my_simple_publisher.destroy_node()
+    waypoint_follower = MoveWaypoint()
+    rclpy.spin(waypoint_follower)
+    waypoint_follower.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__': 
