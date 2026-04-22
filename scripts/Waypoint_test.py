@@ -25,7 +25,7 @@ class MoveWaypoint(Node):
         self.my_subscriber = self.create_subscription(
             msg_type=Odometry, 
             topic="/odom", 
-            callback=self.msg_callback, 
+            callback=self.pose_callback, 
             qos_profile=10,
         )
         
@@ -49,7 +49,7 @@ class MoveWaypoint(Node):
         linear_vel = 0
         angular_vel = 0
 
-        curr_waypoint = self.waypoints(self.waypoint_i)
+        curr_waypoint = self.waypoints[self.waypoint_i]
         
         target_vect = [ curr_waypoint(0) - self.position(0), curr_waypoint(1) - self.position(1)]
         target_dist = math.sqrt( target_vect(0)**2 + target_vect(1)**2 )
