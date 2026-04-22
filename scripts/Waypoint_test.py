@@ -51,9 +51,9 @@ class MoveWaypoint(Node):
 
         curr_waypoint = self.waypoints[self.waypoint_i]
         
-        target_vect = [ curr_waypoint(0) - self.position(0), curr_waypoint(1) - self.position(1)]
-        target_dist = math.sqrt( target_vect(0)**2 + target_vect(1)**2 )
-        target_ang = math.atan2(target_vect(1),target_vect(0))
+        target_vect = [ curr_waypoint[0] - self.position[0], curr_waypoint[1] - self.position[1]]
+        target_dist = math.sqrt( target_vect[0]**2 + target_vect[1]**2 )
+        target_ang = math.atan2(target_vect[1],target_vect[0])
 
         if target_dist > 0.05:
             
