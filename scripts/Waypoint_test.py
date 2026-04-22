@@ -66,7 +66,7 @@ class MoveWaypoint(Node):
         else:
             self.waypoint_i += 1
 
-            if self.waypooint_i > length(self.waypoints):
+            if self.waypoint_i > len(self.waypoints):
                 self.waypoint_i = 0
         
         self.publish_vel(linear_vel, angular_vel)
