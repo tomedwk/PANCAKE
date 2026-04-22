@@ -23,6 +23,9 @@ ament_python_install_package(${PROJECT_NAME}_modules)
 install(PROGRAMS
   scripts/basic_velocity_control.py
   scripts/stop_me.py
+  scripts/range_seg.py
+  scripts/collision_stop.py
+  scripts/collision_turn.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
