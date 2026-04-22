@@ -22,7 +22,7 @@ class BasicObstacle(Node):
         super().__init__("basic_obstacle") 
 
         #Tunning values
-        self.linear_vel=0.2 #straight velocity
+        self.linear_vel=0.1 #straight velocity
         self.angluar_vel=0.2 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right

@@ -79,7 +79,7 @@ class BasicObstacle(Node):
 
         #current state
         if self.obstacle==False:
-            topic_msg.twist.linear.x=0.2 #go straight
+            topic_msg.twist.linear.x=0.1 #go straight
         elif self.obstacle== True:
             topic_msg.twist.linear.x=0.0 #stop
 
