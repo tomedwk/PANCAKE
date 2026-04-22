@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Saves the Lidar data every X seconds based on the variable Interval
+
 import rclpy
 from rclpy.node import Node
 import subprocess
