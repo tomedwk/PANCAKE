@@ -16,7 +16,7 @@ class MoveWaypoint(Node):
         self.position = [0,0]
         self.yaw = 0
         
-        self.waypoints = [ [0,0], [0,1], [1,1] ]
+        self.waypoints = [ [0,0], [0,-1], [-1,-1] ]
         self.waypoint_i = 0
 
         self.counter = 0
@@ -46,8 +46,8 @@ class MoveWaypoint(Node):
         )
 
     def timer_callback(self):
-        linear_vel = 0
-        angular_vel = 0
+        linear_vel = 0.0
+        angular_vel = 0.0
 
         curr_waypoint = self.waypoints[self.waypoint_i]
         
@@ -57,10 +57,10 @@ class MoveWaypoint(Node):
 
         if target_dist > 0.05:
             
-            if (self.yaw < target_ang):
-                angular_vel = 0.5
-            elif (self.yaw > target_ang):
-                angular_vel = -0.5
+            if (self.yaw - target_ang > 0.1):
+                angular_vel = -0.3
+            elif (self.yaw - target_ang - 0.1):
+                angular_vel = 0.3
             else: 
                 linear_vel = 0.1
         else:
@@ -85,7 +85,7 @@ class MoveWaypoint(Node):
         if self.counter > 10: 
             self.counter = 0
             self.get_logger().info(
-                f"x = {pos_x:.3f} (m), y = {pos_y:.3f} (m), yaw = {yaw:.3f} (radians)"
+                f"x = {pos_x:.3f} (m), y = {pos_y:.3f} (m), yaw = {self.yaw:.3f} (radians)"
             ) 
         else:
             self.counter += 1
