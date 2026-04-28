@@ -111,7 +111,8 @@ class MoveWaypoint(Node):
         self.yaw = self.quaternion_to_euler(pose.orientation) 
 
         self.get_logger().info( 
-            f"x:{pos_x:.3f}, y:{pos_y:.3f}, yaw:{self.yaw:.3f}"
+            f"x:{pos_x:.3f}, y:{pos_y:.3f}, yaw:{self.yaw:.3f}",
+            throttle_duration_sec=1, 
         ) 
 
 
@@ -125,7 +126,7 @@ class MoveWaypoint(Node):
         self.get_logger().info( 
             f"Lin_Vel: {topic_msg.twist.linear.x:.2f}, "
             f"Ang_Vel: {topic_msg.twist.angular.z:.2f}",
-            throttle_duration_sec=0.5, 
+            throttle_duration_sec=1, 
         )
 
     def quaternion_to_euler(self, orientation):
