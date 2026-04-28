@@ -27,6 +27,7 @@ install(PROGRAMS
   scripts/collision_stop.py
   scripts/collision_turn.py
   scripts/Periodic_Map_Saver.py
+  scripts/Waypoint_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
