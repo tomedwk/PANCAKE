@@ -47,7 +47,8 @@ class BasicObstacle(Node):
         collision_left = scan_data.ranges[0:19] 
         collision_right = scan_data.ranges[-18:] 
         collision_zone = np.array(collision_right + collision_left) #Convert to array rather then list
-        valid_data = collision_zone[collision_zone != float("inf") and collision_zone != 0] #filter out infinite ones (sim) and zeros (real robot)
+        valid_data = collision_zone[collision_zone != float("inf")] #filter out infinite ones (sim) 
+        valid_data = collision_zone[collision_zone != 0] #filter out zeros (real robot)
         if np.shape(valid_data)[0] > 0: 
             self.collision_min=valid_data.min()
         else:

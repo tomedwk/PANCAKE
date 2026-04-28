@@ -13,7 +13,7 @@ from rclpy.signals import SignalHandlerOptions
 from sensor_msgs.msg import LaserScan  #Laser scan data type
 import numpy as np #Used for data put togethers
 
-from part2_navigation_modules.tb3_tools import quaternion_to_euler 
+from ele434_team15_2026_modules.tb3_tools import quaternion_to_euler 
 from math import sqrt, pow, pi 
 
 class BasicObstacle(Node): 
@@ -80,7 +80,8 @@ class BasicObstacle(Node):
         collision_left = scan_data.ranges[0:self.collision_zone_left] 
         collision_right = scan_data.ranges[self.collision_zone_right:] 
         collision_zone = np.array(collision_right + collision_left) #Convert to array rather then list
-        valid_data = collision_zone[collision_zone != float("inf")] #filter out infinite ones
+        valid_data = collision_zone[collision_zone != float("inf")] #filter out infinite ones (sim) 
+        valid_data = collision_zone[collision_zone != 0] #filter out zeros (real robot)
 
         if np.shape(valid_data)[0] > 0: 
             self.collision_min=valid_data.min()
@@ -109,7 +110,7 @@ class BasicObstacle(Node):
         elif self.obstacle== True:
             diff = self.theta_z - self.theta_zref
             diff = (diff + pi) % (2 * pi) - pi  # Wrap to [-180°, 180°]
-            if (diff) >= (45*pi/180):
+            if (diff) >= (40*pi/180):
                 self.theta_zref=self.theta_z
                 self.get_logger().info(f"time to go straight")
                 self.obstacle=False
