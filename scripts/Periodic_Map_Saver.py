@@ -3,7 +3,6 @@
 import rclpy
 from rclpy.node import Node
 import subprocess
-from datetime import datetime
 import os
 
 
@@ -13,7 +12,7 @@ class MapSaver(Node):
         super().__init__("map_saver")
 
         # Folder to save maps
-        self.save_dir = os.path.expanduser("~/ros2_ws/src/ele434_team15_2026/scripts/Maps")
+        self.save_dir = os.path.expanduser("~/ros2_ws/src/ele434_team15_2026/maps")
         os.makedirs(self.save_dir, exist_ok=True)
 
         # Save interval (seconds)
@@ -30,8 +29,7 @@ class MapSaver(Node):
         )
 
     def timer_callback(self):
-        timestamp = datetime.now().strftime("%H_%M_%S")
-        map_path = os.path.join(self.save_dir, f"map_{timestamp}")
+        map_path = os.path.join(self.save_dir, f"explore_map")
 
         self.get_logger().info(f"Saving map: {map_path}")
 
