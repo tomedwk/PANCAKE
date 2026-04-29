@@ -23,5 +23,14 @@ def generate_launch_description():
                     'Mapping.launch.py'
                 )
             )
+        ),
+        
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    launch_dir,
+                    'FSM.launch.py'
+                )
+            )
         )
     ])
