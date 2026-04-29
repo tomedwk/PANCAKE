@@ -28,6 +28,7 @@ install(PROGRAMS
   scripts/collision_turn.py
   scripts/Periodic_Map_Saver.py
   scripts/Waypoint_test.py
+  scripts/Repulsor_Field.py
   scripts/FSM/Manager.py
   scripts/FSM/waypoint.py
   DESTINATION lib/${PROJECT_NAME}
