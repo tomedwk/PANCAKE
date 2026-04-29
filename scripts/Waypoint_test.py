@@ -181,7 +181,7 @@ def main(args=None):
     )
 
     waypoint_follower = MoveWaypoint()
-    waypoint_follower.zero_location()
+    #waypoint_follower.zero_location()
     try:
         rclpy.spin(waypoint_follower)
     except KeyboardInterrupt:
