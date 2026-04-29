@@ -15,7 +15,7 @@ from sensor_msgs.msg import LaserScan  #Laser scan data type
 import numpy as np #Used for data put togethers
 
 from ele434_team15_2026_modules.tb3_tools import quaternion_to_euler 
-from math import sqrt, pow, pi 
+from math import sqrt, pow, pi, dist
 
 class BasicObstacle(Node): 
 
@@ -28,12 +28,16 @@ class BasicObstacle(Node):
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
         self.distance_collision=0.4 #distance before object needs to be avoided
+        self.turn_done=False #to know whether turn is done
         
         self.collision_min=float("nan")
         self.theta_z = 0.0
         self.theta_zref = 0.0
+        self.y_ref=0.0
+        self.x_ref=0.0
+        self.y=0.0
+        self.x=0.0
         self.first_message = False #Whether it has been the first message
-        self.turn=False #Whether you need to turn
 
         #Set up key_info
           #Create key info to be published
@@ -41,6 +45,8 @@ class BasicObstacle(Node):
         self.key_info.state= "Waypoint"
         self.key_info.waypoint_x=0
         self.key_info.waypoint_y=0
+
+        self.distance=0
 
 
 
@@ -82,9 +88,13 @@ class BasicObstacle(Node):
 
     def odom_callback(self, msg_data: Odometry):
         pose = msg_data.pose.pose 
+        #set pose to the right thing
+        self.y=pose.position.y
+        self.x=pose.position.x
 
         (roll, pitch, yaw) = quaternion_to_euler(pose.orientation) 
         self.theta_z = yaw 
+
 
         if not self.first_message: 
             self.first_message = True
@@ -115,6 +125,7 @@ class BasicObstacle(Node):
         topic_msg.twist.angular.y = 0.0
         topic_msg.twist.angular.z = 0.0
        
+
         #does state need to be changed
         if self.key_info.state == "Waypoint":
             if not np.isnan(self.collision_min):
@@ -125,17 +136,26 @@ class BasicObstacle(Node):
         elif self.key_info.state == "Obstacle":
             diff = self.theta_z - self.theta_zref
             diff = (diff + pi) % (2 * pi) - pi  # Wrap to [-180°, 180°]
-            if (diff) >= (40*pi/180):
+            if abs(diff) >= (40*pi/180):
                 self.theta_zref=self.theta_z
-                self.get_logger().info(f"time to go straight")
+                self.get_logger().info(f"time to go straight, distance: {self.distance}")
+                self.turn_done=True
+                self.x_ref=self.x
+                self.y_ref=self.y
+            if self.distance > 0.1 and self.turn_done == True:
+                self.get_logger().info(f"go straight done")
+                self.x_ref=self.x
+                self.y_ref=self.y
+                self.turn_done=False
                 self.key_info.state ="Waypoint"
+
+            
 
 
 
         #current state
         if self.key_info.state == "Waypoint":
             #Do waypoint bit
-            topic_msg.twist.linear.x=self.linear_vel #go straight
             self.get_logger().info(
             f"State: {self.key_info.state} collision_min {self.collision_min:.2}",
             throttle_duration_sec = 1,
@@ -143,16 +163,21 @@ class BasicObstacle(Node):
         elif self.key_info.state == "Obstacle":
             #Do obstacle bit
             #Turn 45 degrees
-            topic_msg.twist.linear.x=0.0
-            topic_msg.twist.angular.z=self.angluar_vel
-            self.get_logger().info(f"turning  yaw:{(self.theta_z - self.theta_zref)*180/pi:.3}",
-            throttle_duration_sec = 2,
-            )
+            if self.turn_done== False:
+                topic_msg.twist.linear.x=0.0
+                topic_msg.twist.angular.z=self.angluar_vel
+                self.get_logger().info(f"turning  yaw:{(self.theta_z - self.theta_zref)*180/pi:.3}",
+                throttle_duration_sec = 2,
+                )
+            elif self.turn_done ==True:
+                self.distance=dist([self.x_ref, self.y_ref],[self.x, self.y])
+                self.get_logger().info(f"time to go straight, distance: {self.distance} turnDone : {self.turn_done}")
+                topic_msg.twist.linear.x=self.linear_vel #go straight
+
+            self.my_publisher.publish(topic_msg)
     
 
         
-
-        self.my_publisher.publish(topic_msg)
         self.my_publisher_key.publish(self.key_info)
        
 
