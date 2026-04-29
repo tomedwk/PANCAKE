@@ -127,11 +127,11 @@ class obsavoid(Node):
             Heading_Relative = math.atan(abs(self.LateralForce)/abs(self.ForwardForce))              
         except:
             Heading_Relative = 0.0
-        if Self.LateralForce >= 0 and Self.ForwardForce < 0:
+        if self.LateralForce >= 0 and self.ForwardForce < 0:
             Heading_Relative = math.pi-Heading_Relative
-        elif Self.LateralForce < 0 and Self.ForwardForce < 0:
+        elif self.LateralForce < 0 and self.ForwardForce < 0:
             Heading_Relative = -1*(math.pi-Heading_Relative)
-        elif Self.LateralForce < 0 and Self.ForwardForce >= 0:
+        elif self.LateralForce < 0 and self.ForwardForce >= 0:
             Heading_Relative = -Heading_Relative
 
 
