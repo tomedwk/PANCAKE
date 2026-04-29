@@ -28,6 +28,8 @@ install(PROGRAMS
   scripts/collision_turn.py
   scripts/Periodic_Map_Saver.py
   scripts/Waypoint_test.py
+  scripts/FSM/Manager.py
+  scripts/FSM/waypoint.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -35,6 +37,10 @@ install(DIRECTORY
   launch
   rviz
   DESTINATION share/${PROJECT_NAME}
+)
+find_package(rosidl_default_generators REQUIRED)
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/KeyInfo.msg" 
 )
 
 ament_package()
