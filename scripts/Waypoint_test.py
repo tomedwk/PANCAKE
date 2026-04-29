@@ -17,8 +17,11 @@ class MoveWaypoint(Node):
         super().__init__("move_waypoint") 
 
         # initialise robot position
-        self.position = [0,0]
-        self.yaw = 0
+        self.init_position = [0,0]
+        self.init_yaw = 0
+
+        self.abs_position = [0,0]
+        self.abs_yaw = 0
 
         # initialise list of waypoints [x,y] & waypoint pointer
         self.waypoints = [ [0,0], [1,0], [1,1], [0,1] ]
@@ -39,6 +42,7 @@ class MoveWaypoint(Node):
             topic="cmd_vel",
             qos_profile=10,
         ) 
+        
 
         # timer for main control loop
         publish_rate = 10 # Hz
@@ -59,15 +63,17 @@ class MoveWaypoint(Node):
         linear_vel = 0.0
         angular_vel = 0.0
 
+        # calculate relative position 
+        rel_position = self.abs_position - self.init_position
+        rel_yaw = self.abs_yaw - self.init_yaw
+
 
         # get the current waypoint to go towards
         curr_waypoint = self.waypoints[self.waypoint_ptr]
-        
-        # unit vector pointing in robot forward direction 
-        forward_vect = [math.cos(self.yaw), math.sin(self.yaw)]
+        forward_vect = [math.cos(rel_yaw), math.sin(rel_yaw)]            # unit vector pointing in robot forward direction 
 
         # vector pointing from robot to target waypoint
-        target_vect = [ curr_waypoint[0] - self.position[0], curr_waypoint[1] - self.position[1]]
+        target_vect = [ curr_waypoint[0] - rel_position[0], curr_waypoint[1] - rel_position[1]]
 
         # distance from robot to target way point
         dist_error = math.sqrt( target_vect[0]**2 + target_vect[1]**2 )
@@ -106,9 +112,8 @@ class MoveWaypoint(Node):
         pos_x = pose.position.x
         pos_y = pose.position.y
 
-        self.position = [pos_x, pos_y]
-
-        self.yaw = self.quaternion_to_euler(pose.orientation) 
+        self.abs_position = [pos_x, pos_y]
+        self.abs_yaw = self.quaternion_to_euler(pose.orientation) 
 
         self.get_logger().info( 
             f"x:{pos_x:.3f}, y:{pos_y:.3f}, yaw:{self.yaw:.3f}",
@@ -142,6 +147,10 @@ class MoveWaypoint(Node):
 
         return yaw
 
+def zero_location(self):
+    self.init_position = self.abs_position
+    self.init_yaw = self.abs_yaw
+    
 
 
 def main(args=None): 
@@ -151,6 +160,7 @@ def main(args=None):
     )
 
     waypoint_follower = MoveWaypoint()
+    waypoint_follower.zero_location()
     try:
         rclpy.spin(waypoint_follower)
     except KeyboardInterrupt:
