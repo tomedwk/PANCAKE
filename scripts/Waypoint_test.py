@@ -16,6 +16,8 @@ class MoveWaypoint(Node):
     def __init__(self):
         super().__init__("move_waypoint") 
 
+        self.startup = True
+
         # initialise robot position
         self.init_position = [0,0]
         self.init_yaw = 0
@@ -64,7 +66,7 @@ class MoveWaypoint(Node):
         angular_vel = 0.0
 
         rel_position = [0,0]
-        rel_yaw = 0
+        rel_yaw = 0.0
 
         # calculate relative position 
         rel_position[0] = self.abs_position[0] - self.init_position[0]
@@ -123,12 +125,26 @@ class MoveWaypoint(Node):
 
         self.abs_position = [pos_x, pos_y]
         self.abs_yaw = self.quaternion_to_euler(pose.orientation) 
-        '''
-        self.get_logger().info( 
-            f"abs_x:{pos_x:.3f}, abs_y:{pos_y:.3f}, abs_yaw:{self.abs_yaw}",
-            throttle_duration_sec=1, 
-        ) 
-        '''
+
+        
+        if self.startup == True:
+            self.init_position = self.abs_position
+            self.init_yaw = self.abs_yaw
+
+            self.get_logger().info( 
+                f"waypoint initialised with start position "
+                f"x:{self.init_position[0]:.3f}, y:{self.init_position[1]:.3f}, yaw:{self.init_yaw}",
+                throttle_duration_sec=1, 
+            ) 
+
+            self.startup = False
+            
+        else:
+            self.get_logger().info( 
+                f"abs_x:{pos_x:.3f}, abs_y:{pos_y:.3f}, abs_yaw:{self.abs_yaw}",
+                throttle_duration_sec=1, 
+            ) 
+        
 
 
     def publish_vel(self, linear_velocity, angular_velocity):
@@ -156,18 +172,6 @@ class MoveWaypoint(Node):
         yaw = math.atan2(t3, t4)
 
         return yaw
-
-    def zero_location(self):
-        
-        self.init_position = self.abs_position
-        self.init_yaw = self.abs_yaw
-
-        self.get_logger().info( 
-            f"waypoint initialised with start position "
-            f"x:{self.init_position[0]:.3f}, y:{self.init_position[1]:.3f}, yaw:{self.init_yaw}",
-            throttle_duration_sec=1, 
-        ) 
-    
 
 
 def main(args=None): 
