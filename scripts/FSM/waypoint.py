@@ -23,7 +23,8 @@ class MoveWaypoint(Node):
         
 
         # initialise list of waypoints [x,y] & waypoint pointer
-        self.waypoints = [ [0,0], [1.5,1.5], [1.5,0]]
+        self.waypoints = [[1.5,1.5],[1.5,-1.5],[-1.5,-1.5],[1.5,-1.5]]
+        #self.waypoints = [ [0,0], [1.5,0]]
         self.waypoint_ptr = 0
         self.key_info=KeyInfo()
 
