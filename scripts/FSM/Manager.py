@@ -2,6 +2,7 @@
 # FSM manager
 
 import rclpy 
+import time
 from rclpy.node import Node
 
 
@@ -23,8 +24,8 @@ class BasicObstacle(Node):
         super().__init__("basic_obstacle") 
 
         #Tunning values
-        self.linear_vel=0.1 #straight velocity
-        self.angluar_vel=0.2 #angular velcoity
+        self.linear_vel=0.2 #straight velocity
+        self.angluar_vel=-0.5 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
         self.distance_collision=0.4 #distance before object needs to be avoided
@@ -47,7 +48,6 @@ class BasicObstacle(Node):
         self.key_info.waypoint_y=0
 
         self.distance=0
-
 
 
 
@@ -132,6 +132,11 @@ class BasicObstacle(Node):
                 if self.collision_min < self.distance_collision:
                     self.get_logger().info("Obstacle detected")
                     self.key_info.state ="Obstacle"
+                    #Set all things before 
+                    self.theta_zref=self.theta_z
+                    self.x_ref=self.x
+                    self.y_ref=self.y
+
 
         elif self.key_info.state == "Obstacle":
             diff = self.theta_z - self.theta_zref
@@ -139,17 +144,15 @@ class BasicObstacle(Node):
             if abs(diff) >= (40*pi/180):
                 self.theta_zref=self.theta_z
                 self.get_logger().info(f"time to go straight, distance: {self.distance}")
-                self.x_ref=self.x
-                self.y_ref=self.y
                 self.key_info.state ="Forward"
 
         elif self.key_info.state == "Forward":
+
             self.distance=dist([self.x_ref, self.y_ref],[self.x, self.y])
-            if not np.isnan(self.collision_min):
-                if self.collision_min < self.distance_collision:
-                    self.get_logger().info("Obstacle detected")
-                    self.key_info.state ="Obstacle"
-            elif self.distance > 0.1:
+            if not np.isnan(self.collision_min) and self.collision_min < self.distance_collision :
+                self.get_logger().info("Obstacle detected")
+                self.key_info.state ="Obstacle"
+            elif self.distance > 0.4:
                 self.get_logger().info(f"go straight done")
                 self.x_ref=self.x
                 self.y_ref=self.y
