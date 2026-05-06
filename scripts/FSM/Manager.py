@@ -2,7 +2,6 @@
 # FSM manager
 
 import rclpy 
-import time
 from rclpy.node import Node
 
 
@@ -24,7 +23,7 @@ class BasicObstacle(Node):
         super().__init__("basic_obstacle") 
 
         #Tunning values
-        self.linear_vel=0.2 #straight velocity
+        self.linear_vel=0.1 #straight velocity
         self.angluar_vel=-0.5 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
@@ -46,6 +45,7 @@ class BasicObstacle(Node):
         self.key_info.state= "Waypoint"
         self.key_info.waypoint_x=0
         self.key_info.waypoint_y=0
+        self.key_info.vel_trigger="False"
 
         self.distance=0
 
@@ -176,12 +176,14 @@ class BasicObstacle(Node):
             #Turn 45 degrees
             topic_msg.twist.linear.x=0.0
             topic_msg.twist.angular.z=self.angluar_vel
+            #self.key_info.vel_trigger= "Angular"
             self.get_logger().info(f"turning  yaw:{(self.theta_z - self.theta_zref)*180/pi:.3}",throttle_duration_sec = 2,)
             self.my_publisher.publish(topic_msg)
 
         elif self.key_info.state == "Forward":
             topic_msg.twist.linear.x=self.linear_vel #go straight
             topic_msg.twist.angular.z=0.0
+            #self.key_info.vel_trigger= "Linear"
             self.my_publisher.publish(topic_msg)
             self.get_logger().info(f"Going striaght:{self.distance}",throttle_duration_sec = 2,)
     
