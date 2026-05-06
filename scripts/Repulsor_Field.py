@@ -41,6 +41,15 @@ class obsavoid(Node):
             qos_profile=10,
         )
 
+        #Create Subsciber to Waypoint_Locus Topic
+
+        self.Waypoint_Location = self.create_subscription(
+            msg_type = unit8[]
+            topic"Waypoint_Locus"
+            callback=self.lidar_callback
+        )
+
+
 
         #subscribe to the cmd_vel topic to publish vel commands
 
@@ -64,7 +73,11 @@ class obsavoid(Node):
         self.get_logger().info(f"The '{self.get_name()}' node is initialised.")
 
 
-    def lidar_callback(self, scan_data: LaserScan):
+    def lidar_callback(self, scan_data: LaserScan, Waypoint_Location: uint8[]):
+
+
+
+
 
 
         tempcount = 0 #initialise counter, equivalent to angle
@@ -77,8 +90,10 @@ class obsavoid(Node):
         #Initialise tunable values, for later use in playing with repulsor settings.
 
 
-        accel_parameter = -1
+        accel_parameter = -1 # for obstacles to be repulsive
+        way_accel_parameter = 1 # for waypoint attractive force
         obstacle_mass = 1
+        waypoint_mass = 10
        
         #While loop to cycle through azimuth and assign forces from the objects detected
 
@@ -104,7 +119,13 @@ class obsavoid(Node):
 
 
             tempcount += 1
+        
+        #Generate attractive force for waypoint.
+        Waypoint_Force = way_accel_parameter*waypoint_mass/(Waypoint_Location[0]**2)
+        self.LateralForce = self.LateralForce + math.sin(math.pi*Waypoint_Location.data[1]/180)*Waypoint_Force
+        self.ForwardForce = self.ForwardForce + math.cos(math.pi*Waypoint_Location.data[1]/180)*Waypoint_Force
 
+        
 
     def on_shutdown(self):
         self.get_logger().info(

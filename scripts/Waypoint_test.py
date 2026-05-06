@@ -40,6 +40,12 @@ class MoveWaypoint(Node):
             qos_profile=10,
         ) 
 
+        self.Waypoint_Location = self.create_publisher(
+            msg_type=uint8[],
+            topic="Waypoint_Locus",
+            qos_profile=10,
+        )
+
         # timer for main control loop
         publish_rate = 10 # Hz
         self.timer = self.create_timer(
@@ -68,7 +74,8 @@ class MoveWaypoint(Node):
 
         # vector pointing from robot to target waypoint
         target_vect = [ curr_waypoint[0] - self.position[0], curr_waypoint[1] - self.position[1]]
-
+        
+        
         # distance from robot to target way point
         dist_error = math.sqrt( target_vect[0]**2 + target_vect[1]**2 )
 
@@ -76,6 +83,12 @@ class MoveWaypoint(Node):
         angle_error = math.atan2( forward_vect[0]*target_vect[1] - forward_vect[1]*target_vect[0],
                                 forward_vect[0]*target_vect[0] + forward_vect[1]*target_vect[1] )
       
+
+        # Publish vector array to topic "Waypoint_Locus" via "Waypoint_location"
+        topic_msg = uint8[]()
+        topic_msg.data = [dist_error, angle_error]
+        self.Waypoint_Location.publish(topic_msg)
+
 
         if dist_error > 0.01:
             # robot not at way point => move towards waypoint
