@@ -24,7 +24,7 @@ class BasicObstacle(Node):
 
         #Tunning values
         self.linear_vel=0.1 #straight velocity
-        self.angluar_vel=-0.5 #angular velcoity
+        self.angluar_vel=0.5 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
         self.distance_collision=0.4 #distance before object needs to be avoided
@@ -38,6 +38,11 @@ class BasicObstacle(Node):
         self.y=0.0
         self.x=0.0
         self.first_message = False #Whether it has been the first message
+        
+        #Determine direction to turn
+        self.turn_left = 0
+        self.turn_right = 0
+        self.angle_increment = 20
 
         #Set up key_info
           #Create key info to be published
@@ -173,9 +178,17 @@ class BasicObstacle(Node):
 
         elif self.key_info.state == "Obstacle":
             #Do obstacle bit
+            #Determine Direction to turn
+            for i in 4:
+                self.turn_left = self.turn_left + scan_data.ranges[self.collision_zone_left + self.angle_increment*i]
+                self.turn_right = self.turn_right + scan_data.ranges[self.collision_zone_right - self.angle_increment*i] 
             #Turn 45 degrees
+            if self.turn_left < self.turn_right: 
+                topic_msg.twist.angular.z=self.angluar_vel
+            else:
+                topic_msg.twist.angular.z=-self.angluar_vel
             topic_msg.twist.linear.x=0.0
-            topic_msg.twist.angular.z=self.angluar_vel
+            
             #self.key_info.vel_trigger= "Angular"
             self.get_logger().info(f"turning  yaw:{(self.theta_z - self.theta_zref)*180/pi:.3}",throttle_duration_sec = 2,)
             self.my_publisher.publish(topic_msg)
@@ -220,3 +233,4 @@ def main(args=None):
 
 if __name__ == '__main__': 
     main()
+
