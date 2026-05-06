@@ -18,13 +18,19 @@ class MoveWaypoint(Node):
         super().__init__("move_waypoint") 
 
         # initialise robot position
-        self.position = [0,0]
-        self.yaw = 0
+
+        self.startup = True
         
+        self.init_position = [0,0]
+        self.init_yaw = 0
+
+        self.abs_position = [0,0]
+        self.abs_yaw = 0
 
         # initialise list of waypoints [x,y] & waypoint pointer
         self.waypoints = [ [0,0], [1.5,1.5], [1.5,0]]
         self.waypoint_ptr = 0
+        
         self.key_info=KeyInfo()
 
 
@@ -74,15 +80,27 @@ class MoveWaypoint(Node):
             linear_vel = 0.0
             angular_vel = 0.0
 
+            rel_position = [0,0]
+            rel_yaw = 0.0
 
+            temp_x = self.abs_position[0] - self.init_position[0]
+            temp_y = self.abs_position[1] - self.init_position[1]
+
+            rel_position[0] = math.cos(-self.init_yaw)*temp_x - math.sin(-self.init_yaw)*temp_y
+            rel_position[1] = math.sin(-self.init_yaw)*temp_x + math.cos(-self.init_yaw)*temp_y
+            rel_yaw = self.abs_yaw - self.init_yaw
+
+            self.get_logger().info( 
+                f"rel_x:{rel_position[0]:.3f}, rel_y:{rel_position[1]:.3f}, rel_yaw:{rel_yaw:.3f}",
+                throttle_duration_sec=1, 
+            ) 
+            
             # get the current waypoint to go towards
             curr_waypoint = self.waypoints[self.waypoint_ptr]
-            
-            # unit vector pointing in robot forward direction 
-            forward_vect = [math.cos(self.yaw), math.sin(self.yaw)]
+            forward_vect = [math.cos(rel_yaw), math.sin(rel_yaw)]   # unit vector pointing in robot forward direction 
 
             # vector pointing from robot to target waypoint
-            target_vect = [ curr_waypoint[0] - self.position[0], curr_waypoint[1] - self.position[1]]
+            target_vect = [ curr_waypoint[0] - rel_position[0], curr_waypoint[1] - rel_position[1] ]
 
             # distance from robot to target way point
             dist_error = math.sqrt( target_vect[0]**2 + target_vect[1]**2 )
@@ -127,14 +145,22 @@ class MoveWaypoint(Node):
         pos_x = pose.position.x
         pos_y = pose.position.y
 
-        self.position = [pos_x, pos_y]
+        self.abs_position = [pos_x, pos_y]
+        self.abs_yaw = self.quaternion_to_euler(pose.orientation) 
 
-        self.yaw = self.quaternion_to_euler(pose.orientation) 
+        if selff.startup == True:
+            self.init_position = self.abs_position
+            self.init_yaw = self.abs_yaw
 
-        self.get_logger().info( 
-            f"x:{pos_x:.3f}, y:{pos_y:.3f}, yaw:{self.yaw:.3f}",
-            throttle_duration_sec=1, 
-        ) 
+            self.get_logger().info(
+                f"waypoint initalised with start position "
+                f"x:{self.init_position[0]:.3f}, y:{self.init_position[1]:.3f}, yaw:{self.init_yaw}",
+                throttle_duration_sec = 1,
+            )
+
+            self.startup = False
+
+      
     def key_info_callback(self, key_info_message: KeyInfo): 
         # recieve key info data
         self.key_info=key_info_message
