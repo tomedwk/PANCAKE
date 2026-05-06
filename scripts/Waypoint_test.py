@@ -69,8 +69,12 @@ class MoveWaypoint(Node):
         rel_yaw = 0.0
 
         # calculate relative position 
-        rel_position[0] = self.abs_position[0] - self.init_position[0]
-        rel_position[1] = self.abs_position[1] - self.init_position[1]
+
+        temp_x = self.abs_position[0] - self.init_position[0]
+        temp_y = self.abs_position[1] - self.init_position[1]
+
+        rel_position[0] = math.cos(-self.init_yaw)*temp_x - math.sin(-self.init_yaw)*temp_y
+        rel_position[1] = math.sin(-self.init_yaw)*temp_x + math.cos(-self.init_yaw)*temp_y
         rel_yaw = self.abs_yaw - self.init_yaw
 
         self.get_logger().info( 
@@ -138,12 +142,13 @@ class MoveWaypoint(Node):
             ) 
 
             self.startup = False
-            
+        '''
         else:
             self.get_logger().info( 
                 f"abs_x:{pos_x:.3f}, abs_y:{pos_y:.3f}, abs_yaw:{self.abs_yaw}",
                 throttle_duration_sec=1, 
             ) 
+        '''
         
 
 
@@ -154,11 +159,13 @@ class MoveWaypoint(Node):
         topic_msg.twist.angular.z = angular_velocity
         self.vel_publisher.publish(topic_msg) 
 
+        '''
         self.get_logger().info( 
             f"Lin_Vel: {topic_msg.twist.linear.x:.2f}, "
             f"Ang_Vel: {topic_msg.twist.angular.z:.2f}",
             throttle_duration_sec=1, 
         )
+        '''
 
     def quaternion_to_euler(self, orientation):
         # convert quaternion rotation to yaw angele
