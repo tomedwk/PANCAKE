@@ -45,7 +45,7 @@ class BasicObstacle(Node):
         self.key_info.state= "Waypoint"
         self.key_info.waypoint_x=0
         self.key_info.waypoint_y=0
-        self.key_info.vel_trigger="False"
+        #self.key_info.vel_trigger="False"
 
         self.distance=0
 
