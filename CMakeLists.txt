@@ -31,6 +31,7 @@ install(PROGRAMS
   scripts/Repulsor_Field.py
   scripts/FSM/Manager.py
   scripts/FSM/waypoint.py
+  scripts/FSM/vel_control.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
