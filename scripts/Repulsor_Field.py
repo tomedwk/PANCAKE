@@ -123,12 +123,19 @@ class obsavoid(Node):
         topic_msg.twist.angular.x = 0.0
         topic_msg.twist.angular.y = 0.0
         topic_msg.twist.angular.z = 0.0
-
-
-        try:              
-            Heading_Relative = math.atan(self.ForwardForce/self.LateralForce)-math.pi/2              
+        try:
+            Heading_Relative = math.atan(abs(self.LateralForce)/abs(self.ForwardForce))              
         except:
             Heading_Relative = 0.0
+        if self.LateralForce >= 0 and self.ForwardForce < 0:
+            Heading_Relative = math.pi-Heading_Relative
+        elif self.LateralForce < 0 and self.ForwardForce < 0:
+            Heading_Relative = -1*(math.pi-Heading_Relative)
+        elif self.LateralForce < 0 and self.ForwardForce >= 0:
+            Heading_Relative = -Heading_Relative
+
+
+        
 
 
         ManoeuvreCutoff = 30 #define heading region where robot will attempt to move & turn simultaneously.
