@@ -23,7 +23,8 @@ class MoveWaypoint(Node):
         
 
         # initialise list of waypoints [x,y] & waypoint pointer
-        self.waypoints = [ [0,0], [1.5,1.5], [1.5,0]]
+        self.waypoints = [[1.1,1.1],[1.1,-1.1],[-1.1,-1.1],[1.1,-1.1]]
+        #self.waypoints = [ [0,0], [1.5,0]]
         self.waypoint_ptr = 0
         self.key_info=KeyInfo()
 
@@ -95,13 +96,14 @@ class MoveWaypoint(Node):
             if dist_error > 0.01:
                 # robot not at way point => move towards waypoint
                 if angle_error > 0.05:
-                    angular_vel = 0.3
+                    angular_vel = 0.5
+
 
                 elif angle_error < -0.05:
-                    angular_vel = -0.3
+                    angular_vel = -0.5
 
                 else: 
-                    linear_vel = 0.1
+                    linear_vel = 0.2
 
             else:
                 # robot at waypoint => increment waypoint pointer 
