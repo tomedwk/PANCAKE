@@ -24,7 +24,7 @@ class BasicObstacle(Node):
 
         #Tunning values
         self.linear_vel=0.1 #straight velocity
-        self.angluar_vel=0.5 #angular velcoity
+        self.angluar_vel=1 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
         self.distance_collision=0.4 #distance before object needs to be avoided
