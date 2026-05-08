@@ -18,7 +18,7 @@ class MapSaver(Node):
         os.makedirs(self.save_dir, exist_ok=True)
 
         # Save interval (seconds)
-        self.interval = 25
+        self.interval = 5
 
         # Timer (same structure as your example)
         self.timer = self.create_timer(
