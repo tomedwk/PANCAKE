@@ -72,11 +72,13 @@ class MoveWaypoint(Node):
 
     def timer_callback(self):
         if self.key_info.state == "Waypoint":
-
+            
+            '''
             self.get_logger().warn( 
             f"In Waypoint State",
             throttle_duration_sec=1, 
             ) 
+            '''
 
             # control loop: calculate cmd velocities to follow waypoint list
 
@@ -99,17 +101,6 @@ class MoveWaypoint(Node):
             throttle_duration_sec=1, 
             ) 
 
-            temp_x = self.abs_position[0] - self.init_position[0]
-            temp_y = self.abs_position[1] - self.init_position[1]
-
-            rel_position[0] = math.cos(-self.init_yaw)*temp_x - math.sin(-self.init_yaw)*temp_y
-            rel_position[1] = math.sin(-self.init_yaw)*temp_x + math.cos(-self.init_yaw)*temp_y
-            rel_yaw = self.abs_yaw - self.init_yaw
-
-            self.get_logger().info( 
-                f"rel_x:{rel_position[0]:.3f}, rel_y:{rel_position[1]:.3f}, rel_yaw:{rel_yaw:.3f}",
-                throttle_duration_sec=1, 
-            ) 
             
             # get the current waypoint to go towards
             curr_waypoint = self.waypoints[self.waypoint_ptr] 
@@ -165,7 +156,7 @@ class MoveWaypoint(Node):
         self.abs_position = [pos_x, pos_y]
         self.abs_yaw = self.quaternion_to_euler(pose.orientation) 
 
-        if selff.startup == True:
+        if self.startup == True:
             self.init_position = self.abs_position
             self.init_yaw = self.abs_yaw
 
@@ -195,11 +186,13 @@ class MoveWaypoint(Node):
         topic_msg.twist.angular.z = angular_velocity
         self.vel_publisher.publish(topic_msg) 
 
+        '''
         self.get_logger().info( 
             f"Lin_Vel: {topic_msg.twist.linear.x:.2f}, "
             f"Ang_Vel: {topic_msg.twist.angular.z:.2f}",
             throttle_duration_sec=1, 
         )
+        '''
 
     def quaternion_to_euler(self, orientation):
         # convert quaternion rotation to yaw angele
