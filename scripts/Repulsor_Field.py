@@ -70,7 +70,7 @@ class obsavoid(Node):
         tempcount = 0 #initialise counter, equivalent to angle
 
 
-        RangeArray = np.array(scan_data.ranges[0:359])
+        RangeArray = np.array(scan_data.ranges[0:360])
         ForceArray = np.zeros(360, dtype=float)
 
 
@@ -79,11 +79,16 @@ class obsavoid(Node):
 
         accel_parameter = -1
         obstacle_mass = 1
+
+        #Zero Force Vals
+
+        self.LateralForce = 0
+        self.ForwardForce = 0
        
         #While loop to cycle through azimuth and assign forces from the objects detected
 
 
-        while tempcount < 359:
+        while tempcount < 360:
             if RangeArray[tempcount] == "inf" or RangeArray[tempcount] == 0:
                 ForceArray[tempcount] = 0
 
@@ -95,7 +100,7 @@ class obsavoid(Node):
             elif 0.2 < RangeArray[tempcount] < 1:
                 ForceArray[tempcount] = (accel_parameter*obstacle_mass)/RangeArray[tempcount]**2
                
-            elif 0 <= RangeArray[tempcount]  <= 0.25:
+            elif 0 <= RangeArray[tempcount]  <= 0.2:
                 ForceArray[tempcount] = (accel_parameter*obstacle_mass)/RangeArray[tempcount]**3 ## power of 3 for additional weighting - proof of concept if it works
 
 
@@ -123,12 +128,19 @@ class obsavoid(Node):
         topic_msg.twist.angular.x = 0.0
         topic_msg.twist.angular.y = 0.0
         topic_msg.twist.angular.z = 0.0
-
-
-        try:              
-            Heading_Relative = math.atan(self.ForwardForce/self.LateralForce)-math.pi/2              
+        try:
+            Heading_Relative = math.atan(abs(self.LateralForce)/abs(self.ForwardForce))              
         except:
             Heading_Relative = 0.0
+        if self.LateralForce >= 0 and self.ForwardForce < 0:
+            Heading_Relative = math.pi-Heading_Relative
+        elif self.LateralForce < 0 and self.ForwardForce < 0:
+            Heading_Relative = -1*(math.pi-Heading_Relative)
+        elif self.LateralForce < 0 and self.ForwardForce >= 0:
+            Heading_Relative = -Heading_Relative
+
+
+        
 
 
         ManoeuvreCutoff = 30 #define heading region where robot will attempt to move & turn simultaneously.
@@ -145,7 +157,7 @@ class obsavoid(Node):
 
         elif abs(Heading_Relative) >=  ((math.pi/180)*ManoeuvreCutoff):
            
-            linear_velocity = VelWeightMax*math.cos(Heading_Relative)
+            linear_velocity = 0.0
             angular_velocity = AngleWeightMax*math.sin(Heading_Relative)
 
 

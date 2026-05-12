@@ -37,7 +37,7 @@ def generate_launch_description():
             launch_arguments={'environment': environment}.items()
         ),
 
-        # Start your map saver node
+        # Start map saver node
         Node(
             package='ele434_team15_2026',
             executable='Periodic_Map_Saver.py',

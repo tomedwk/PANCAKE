@@ -24,7 +24,7 @@ class BasicObstacle(Node):
 
         #Tunning values
         self.linear_vel=0.1 #straight velocity
-        self.angluar_vel=0.2 #angular velcoity
+        self.angluar_vel=1 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
         self.distance_collision=0.4 #distance before object needs to be avoided
@@ -38,6 +38,11 @@ class BasicObstacle(Node):
         self.y=0.0
         self.x=0.0
         self.first_message = False #Whether it has been the first message
+        
+        #Determine direction to turn
+        self.turn_left = 0
+        self.turn_right = 0
+        self.angle_increment = 20
 
         #Set up key_info
           #Create key info to be published
@@ -45,9 +50,9 @@ class BasicObstacle(Node):
         self.key_info.state= "Waypoint"
         self.key_info.waypoint_x=0
         self.key_info.waypoint_y=0
+        #self.key_info.vel_trigger="False"
 
         self.distance=0
-
 
 
 
@@ -132,6 +137,11 @@ class BasicObstacle(Node):
                 if self.collision_min < self.distance_collision:
                     self.get_logger().info("Obstacle detected")
                     self.key_info.state ="Obstacle"
+                    #Set all things before 
+                    self.theta_zref=self.theta_z
+                    self.x_ref=self.x
+                    self.y_ref=self.y
+
 
         elif self.key_info.state == "Obstacle":
             diff = self.theta_z - self.theta_zref
@@ -139,15 +149,20 @@ class BasicObstacle(Node):
             if abs(diff) >= (40*pi/180):
                 self.theta_zref=self.theta_z
                 self.get_logger().info(f"time to go straight, distance: {self.distance}")
-                self.turn_done=True
-                self.x_ref=self.x
-                self.y_ref=self.y
-            if self.distance > 0.1 and self.turn_done == True:
+                self.key_info.state ="Forward"
+
+        elif self.key_info.state == "Forward":
+
+            self.distance=dist([self.x_ref, self.y_ref],[self.x, self.y])
+            if not np.isnan(self.collision_min) and self.collision_min < self.distance_collision :
+                self.get_logger().info("Obstacle detected")
+                self.key_info.state ="Obstacle"
+            elif self.distance > 0.4:
                 self.get_logger().info(f"go straight done")
                 self.x_ref=self.x
                 self.y_ref=self.y
-                self.turn_done=False
                 self.key_info.state ="Waypoint"
+
 
             
 
@@ -160,21 +175,30 @@ class BasicObstacle(Node):
             f"State: {self.key_info.state} collision_min {self.collision_min:.2}",
             throttle_duration_sec = 1,
         ) #printing but only every 1 second
+
         elif self.key_info.state == "Obstacle":
             #Do obstacle bit
+            #Determine Direction to turn
+            for i in 4:
+                self.turn_left = self.turn_left + scan_data.ranges[self.collision_zone_left + self.angle_increment*i]
+                self.turn_right = self.turn_right + scan_data.ranges[self.collision_zone_right - self.angle_increment*i] 
             #Turn 45 degrees
-            if self.turn_done== False:
-                topic_msg.twist.linear.x=0.0
+            if self.turn_left < self.turn_right: 
                 topic_msg.twist.angular.z=self.angluar_vel
-                self.get_logger().info(f"turning  yaw:{(self.theta_z - self.theta_zref)*180/pi:.3}",
-                throttle_duration_sec = 2,
-                )
-            elif self.turn_done ==True:
-                self.distance=dist([self.x_ref, self.y_ref],[self.x, self.y])
-                self.get_logger().info(f"time to go straight, distance: {self.distance} turnDone : {self.turn_done}")
-                topic_msg.twist.linear.x=self.linear_vel #go straight
-
+            else:
+                topic_msg.twist.angular.z=-self.angluar_vel
+            topic_msg.twist.linear.x=0.0
+            
+            #self.key_info.vel_trigger= "Angular"
+            self.get_logger().info(f"turning  yaw:{(self.theta_z - self.theta_zref)*180/pi:.3}",throttle_duration_sec = 2,)
             self.my_publisher.publish(topic_msg)
+
+        elif self.key_info.state == "Forward":
+            topic_msg.twist.linear.x=self.linear_vel #go straight
+            topic_msg.twist.angular.z=0.0
+            #self.key_info.vel_trigger= "Linear"
+            self.my_publisher.publish(topic_msg)
+            self.get_logger().info(f"Going striaght:{self.distance}",throttle_duration_sec = 2,)
     
 
         
@@ -209,3 +233,4 @@ def main(args=None):
 
 if __name__ == '__main__': 
     main()
+
