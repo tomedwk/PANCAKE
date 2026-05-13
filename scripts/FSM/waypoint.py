@@ -30,10 +30,13 @@ class MoveWaypoint(Node):
         self.abs_yaw = 0
 
         # initialise list of waypoints [x,y] & waypoint pointer
-        self.waypoints = [ [0,0], [1,0], [1,1], [0,1] ]
+        self.waypoints = [ [0,0], [1.5, 1.5], [0.5, 1.5], [-0.5, 1.5], [ -1.5, 1.5], [-1.5, 0.5], [-1.5, -0.5], [-1.5, -1.5], [ -0.5, -1.5], [0.5, -1.5], [1.5, -1.5], [1.5, -0.5], [1.5, 0.5] ]
         self.waypoint_ptr = 0
         
         self.key_info=KeyInfo()
+
+        self.linear_velocity=0.2 #straight velocity
+        self.angular_velocity=1.0 #angular velcoity
 
 
         # subscriber to robot odom data
@@ -117,17 +120,17 @@ class MoveWaypoint(Node):
                                     forward_vect[0]*target_vect[0] + forward_vect[1]*target_vect[1] )
         
 
-            if dist_error > 0.01:
+            if dist_error > 0.15:
                 # robot not at way point => move towards waypoint
                 if angle_error > 0.05:
-                    angular_vel = 0.5
+                    angular_vel = self.angular_velocity
 
 
                 elif angle_error < -0.05:
-                    angular_vel = -0.5
+                    angular_vel = -self.angular_velocity
 
                 else: 
-                    linear_vel = 0.2
+                    linear_vel = self.linear_velocity
 
             else:
                 # robot at waypoint => increment waypoint pointer 

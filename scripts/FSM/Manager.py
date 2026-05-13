@@ -24,7 +24,7 @@ class BasicObstacle(Node):
         super().__init__("basic_obstacle") 
 
         #Tunning values
-        self.linear_vel=0.1 #straight velocity
+        self.linear_vel=0.2 #straight velocity
         self.angluar_vel=1.0 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
@@ -143,8 +143,8 @@ class BasicObstacle(Node):
                     self.get_logger().info("Obstacle detected")
                     self.key_info.state ="Obstacle"
                     random_angle=random()
-                    random_angle=round(random_angle,2)*(max_turn-min_turn)+min_turn
-                    self.get_logger().warn(f"time to turn, distance: {random_angle}")
+                    random_angle=round(random_angle,2)*(self.max_turn-self.min_turn)+self.min_turn
+                    self.turning_angle=random_angle
                     #Set all things before 
                     self.theta_zref=self.theta_z
                     self.x_ref=self.x
@@ -195,7 +195,7 @@ class BasicObstacle(Node):
             #     topic_msg.twist.angular.z=self.angluar_vel
             # else:
             #     topic_msg.twist.angular.z=-self.angluar_vel
-            topic_msg.twist.angular.z=-self.angluar_vel
+            topic_msg.twist.angular.z=self.angluar_vel
             topic_msg.twist.linear.x=0.0
             
             #self.key_info.vel_trigger= "Angular"
