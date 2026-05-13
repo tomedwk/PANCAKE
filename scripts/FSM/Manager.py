@@ -44,7 +44,8 @@ class BasicObstacle(Node):
         #Determine direction to turn
         self.turn_left = 0
         self.turn_right = 0
-        self.angle_increment = 20
+        self.angle_increment = 10
+        #self.range_data = nan
 
         #Set up key_info
           #Create key info to be published
@@ -119,6 +120,9 @@ class BasicObstacle(Node):
         valid_data = collision_zone[collision_zone != float("inf")] #filter out infinite ones (sim) 
         valid_data = collision_zone[collision_zone != 0] #filter out zeros (real robot)
 
+            
+        self.range_data = scan_data.ranges[0:359]
+
         if np.shape(valid_data)[0] > 0: 
             self.collision_min=valid_data.min()
         else:
@@ -187,17 +191,30 @@ class BasicObstacle(Node):
         elif self.key_info.state == "Obstacle":
             #Do obstacle bit
             #Determine Direction to turn
-            # for i in range(4):
-            #     self.turn_left = self.turn_left + scan_data.ranges[self.collision_zone_left + self.angle_increment*i]
-            #     self.turn_right = self.turn_right + scan_data.ranges[self.collision_zone_right - self.angle_increment*i] 
             # #Turn 45 degrees
-            # if self.turn_left < self.turn_right: 
-            #     topic_msg.twist.angular.z=self.angluar_vel
-            # else:
-            #     topic_msg.twist.angular.z=-self.angluar_vel
-            topic_msg.twist.angular.z=self.angluar_vel
+            i = 0
+            while i < 9:
+                if self.range_data[self.collision_zone_left + self.angle_increment*i] == 0 or self.range_data[self.collision_zone_left + self.angle_increment*i] == float('inf'):
+                    self.turn_left = self.turn_left + 4
+                else:
+                    self.turn_left = self.turn_left + self.range_data[self.collision_zone_left + self.angle_increment*i]
+                
+                if self.range_data[self.collision_zone_right - self.angle_increment*i] == 0 or self.range_data[self.collision_zone_right - self.angle_increment*i] == float('inf'):
+                    self.turn_right = self.turn_right + 4
+                else:
+                    self.turn_right = self.turn_right + self.range_data[self.collision_zone_right - self.angle_increment*i] 
+
+                i += 1
+
+
+            if self.turn_left < self.turn_right: 
+                 topic_msg.twist.angular.z=-self.angluar_vel
+            else:
+                topic_msg.twist.angular.z=self.angluar_vel
             topic_msg.twist.linear.x=0.0
-            
+            self.turn_left = 0
+            self.turn_right = 0
+
             #self.key_info.vel_trigger= "Angular"
             self.get_logger().info(f"turning  yaw:{(self.theta_z - self.theta_zref)*180/pi:.3}",throttle_duration_sec = 2,)
             self.my_publisher.publish(topic_msg)
