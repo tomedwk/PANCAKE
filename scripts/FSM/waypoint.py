@@ -1,232 +1,302 @@
 #!/usr/bin/env python3
 '''
-Code for moving between a set list of waypoints depending on a state  
+Code for moving between a set list of waypoints depending on a state 
 '''
 
-import rclpy 
+
+import rclpy
+import time
 from rclpy.node import Node
 from rclpy.signals import SignalHandlerOptions
 import math
 from ele434_team15_2026.msg import KeyInfo #import key info as a new type
 
+
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 
-class MoveWaypoint(Node): 
-
-    def __init__(self):
-        super().__init__("move_waypoint") 
-
-        self.startup = True
-
-        # initialise robot position
-
-        self.startup = True
-        
-        self.init_position = [0,0]
-        self.init_yaw = 0
-
-        self.abs_position = [0,0]
-        self.abs_yaw = 0
-
-        # initialise list of waypoints [x,y] & waypoint pointer
-        self.waypoints = [ [0,0], [1.5, 1.5], [0.5, 1.5], [-0.5, 1.5], [ -1.5, 1.5], [-1.5, 0.5], [-1.5, -0.5], [-1.5, -1.5], [ -0.5, -1.5], [0.5, -1.5], [1.5, -1.5], [1.5, -0.5], [1.5, 0.5] ]
-        self.waypoint_ptr = 0
-        
-        self.key_info=KeyInfo()
-
-        self.linear_velocity=0.2 #straight velocity
-        self.angular_velocity=1.0 #angular velcoity
 
 
-        # subscriber to robot odom data
-        self.key_info_subscriber = self.create_subscription(
-            msg_type=KeyInfo, 
-            topic="/key_info", 
-            callback=self.key_info_callback, 
-            qos_profile=10,
-        )
-        self.odom_subscriber = self.create_subscription(
-            msg_type=Odometry, 
-            topic="/odom", 
-            callback=self.pose_callback, 
-            qos_profile=10,
-        )
 
-        
-        # pulisher to robot velocity commands
-        self.vel_publisher = self.create_publisher(
-            msg_type=TwistStamped,
-            topic="cmd_vel",
-            qos_profile=10,
-        ) 
-
-        # timer for main control loop
-        publish_rate = 10 # Hz
-        self.timer = self.create_timer(
-            timer_period_sec=1/publish_rate, 
-            callback=self.timer_callback
-        ) 
-
-        self.get_logger().info(
-            f"The '{self.get_name()}' node is initialised." 
-        )
+class MoveWaypoint(Node):
 
 
-    def timer_callback(self):
-        if self.key_info.state == "Waypoint":
-            
-            '''
-            self.get_logger().warn( 
-            f"In Waypoint State",
-            throttle_duration_sec=1, 
-            ) 
-            '''
-
-            # control loop: calculate cmd velocities to follow waypoint list
-
-            # initialise velocities as 0
-            linear_vel = 0.0
-            angular_vel = 0.0
-
-            rel_position = [0,0]
-            rel_yaw = 0.0
-
-            temp_x = self.abs_position[0] - self.init_position[0]
-            temp_y = self.abs_position[1] - self.init_position[1]
-
-            rel_position[0] = math.cos(-self.init_yaw)*temp_x - math.sin(-self.init_yaw)*temp_y
-            rel_position[1] = math.sin(-self.init_yaw)*temp_x + math.cos(-self.init_yaw)*temp_y
-            rel_yaw = self.abs_yaw - self.init_yaw
-
-            self.get_logger().info( 
-            f"rel_x:{rel_position[0]:.3f}, rel_y:{rel_position[1]:.3f}, rel_yaw:{rel_yaw}",
-            throttle_duration_sec=1, 
-            ) 
-
-            
-            # get the current waypoint to go towards
-            curr_waypoint = self.waypoints[self.waypoint_ptr] 
-            forward_vect = [math.cos(rel_yaw), math.sin(rel_yaw)] # unit vector pointing in robot forward direction
-
-            # vector pointing from robot to target waypoint
-            target_vect = [ curr_waypoint[0] - rel_position[0], curr_waypoint[1] - rel_position[1]]
-
-            # distance from robot to target way point
-            dist_error = math.sqrt( target_vect[0]**2 + target_vect[1]**2 )
-
-            # signed angle from robot forward direction to target waypoint vector
-            angle_error = math.atan2( forward_vect[0]*target_vect[1] - forward_vect[1]*target_vect[0],
-                                    forward_vect[0]*target_vect[0] + forward_vect[1]*target_vect[1] )
-        
-
-            if dist_error > 0.15:
-                # robot not at way point => move towards waypoint
-                if angle_error > 0.05:
-                    angular_vel = self.angular_velocity
+   def __init__(self):
+       super().__init__("move_waypoint")
 
 
-                elif angle_error < -0.05:
-                    angular_vel = -self.angular_velocity
-
-                else: 
-                    linear_vel = self.linear_velocity
-
-            else:
-                # robot at waypoint => increment waypoint pointer 
-                self.waypoint_ptr += 1
-                
-                # loop pointer back to start if out of range
-                if self.waypoint_ptr > len(self.waypoints) - 1:
-                    self.waypoint_ptr = 0
-            
-            self.publish_vel(linear_vel, angular_vel)
-        else:
-            self.get_logger().warn( 
-            f"IDLE: Not in waypoint state",
-            throttle_duration_sec=1, 
-            ) 
+       self.startup = True
 
 
-    
-    def pose_callback(self, topic_message: Odometry): 
-        # recieve robot odom data
-        pose = topic_message.pose.pose 
-    
-        pos_x = pose.position.x
-        pos_y = pose.position.y
+       # initialise robot position
 
-        self.abs_position = [pos_x, pos_y]
-        self.abs_yaw = self.quaternion_to_euler(pose.orientation) 
 
-        if self.startup == True:
-            self.init_position = self.abs_position
-            self.init_yaw = self.abs_yaw
+       self.startup = True
+      
+       self.init_position = [0,0]
+       self.init_yaw = 0
 
-            self.get_logger().info(
-                f"waypoint initalised with start position "
-                f"x:{self.init_position[0]:.3f}, y:{self.init_position[1]:.3f}, yaw:{self.init_yaw}",
-                throttle_duration_sec = 1,
-            )
 
-            self.startup = False
+       self.abs_position = [0,0]
+       self.abs_yaw = 0
+
+
+       # initialise list of waypoints [x,y] & waypoint pointer
+       self.waypoints = [ [0,0], [1.5, 1.5], [0.5, 1.5], [-0.5, 1.5], [ -1.5, 1.5], [-1.5, 0.5], [-1.5, -0.5], [-1.5, -1.5], [ -0.5, -1.5], [0.5, -1.5], [1.5, -1.5], [1.5, -0.5], [1.5, 0.5] ]
+       self.waypoint_ptr = 0
+      
+       self.key_info=KeyInfo()
+
+
+       self.linear_velocity=0.2 #straight velocity
+       self.angular_velocity=0.8 #angular velcoity
+       self.timestamp = self.get_clock().now().nanoseconds #Timer
+
+
+
+
+       # subscriber to robot odom data
+       self.key_info_subscriber = self.create_subscription(
+           msg_type=KeyInfo,
+           topic="/key_info",
+           callback=self.key_info_callback,
+           qos_profile=10,
+       )
+       self.odom_subscriber = self.create_subscription(
+           msg_type=Odometry,
+           topic="/odom",
+           callback=self.pose_callback,
+           qos_profile=10,
+       )
+
 
       
-    def key_info_callback(self, key_info_message: KeyInfo): 
-        # recieve key info data
-        self.key_info=key_info_message
-
-        self.get_logger().info( 
-            f"state: {self.key_info.state}",
-            throttle_duration_sec=1, 
-        ) 
+       # pulisher to robot velocity commands
+       self.vel_publisher = self.create_publisher(
+           msg_type=TwistStamped,
+           topic="cmd_vel",
+           qos_profile=10,
+       )
 
 
-    def publish_vel(self, linear_velocity, angular_velocity):
-        # publish cmd velocities 
-        topic_msg = TwistStamped() 
-        topic_msg.twist.linear.x = linear_velocity
-        topic_msg.twist.angular.z = angular_velocity
-        self.vel_publisher.publish(topic_msg) 
+       # timer for main control loop
+       publish_rate = 10 # Hz
+       self.timer = self.create_timer(
+           timer_period_sec=1/publish_rate,
+           callback=self.timer_callback
+       )
 
-        '''
-        self.get_logger().info( 
-            f"Lin_Vel: {topic_msg.twist.linear.x:.2f}, "
-            f"Ang_Vel: {topic_msg.twist.angular.z:.2f}",
-            throttle_duration_sec=1, 
-        )
-        '''
 
-    def quaternion_to_euler(self, orientation):
-        # convert quaternion rotation to yaw angele
-        x = orientation.x
-        y = orientation.y
-        z = orientation.z
-        w = orientation.w
-
-        t3 = +2.0 * (w * z + x * y)
-        t4 = +1.0 - 2.0 * (y * y + z * z)
-        yaw = math.atan2(t3, t4)
-
-        return yaw
+       self.get_logger().info(
+           f"The '{self.get_name()}' node is initialised."
+       )
 
 
 
-def main(args=None): 
-    rclpy.init(
-        args=args,
-        signal_handler_options=SignalHandlerOptions.NO
-    )
 
-    waypoint_follower = MoveWaypoint()
-    try:
-        rclpy.spin(waypoint_follower)
-    except KeyboardInterrupt:
-        print("Shutdown request (Ctrl+C) detected...")
-    finally:
-        waypoint_follower.publish_vel(0.0,0.0)
-        waypoint_follower.destroy_node()
-        rclpy.shutdown()
+   def timer_callback(self):
+       if self.key_info.state == "Waypoint":
+          
+           '''
+           self.get_logger().warn(
+           f"In Waypoint State",
+           throttle_duration_sec=1,
+           )
+           '''
+           time_now = self.get_clock().now().nanoseconds
+           elapsed_time = (time_now - self.timestamp) * 1e-9
 
-if __name__ == '__main__': 
-    main()
+
+           # control loop: calculate cmd velocities to follow waypoint list
+
+
+           # initialise velocities as 0
+           linear_vel = 0.0
+           angular_vel = 0.0
+
+
+           rel_position = [0,0]
+           rel_yaw = 0.0
+
+
+           temp_x = self.abs_position[0] - self.init_position[0]
+           temp_y = self.abs_position[1] - self.init_position[1]
+
+
+           rel_position[0] = math.cos(-self.init_yaw)*temp_x - math.sin(-self.init_yaw)*temp_y
+           rel_position[1] = math.sin(-self.init_yaw)*temp_x + math.cos(-self.init_yaw)*temp_y
+           rel_yaw = self.abs_yaw - self.init_yaw
+
+
+           self.get_logger().info(
+           f"rel_x:{rel_position[0]:.3f}, rel_y:{rel_position[1]:.3f}, rel_yaw:{rel_yaw}",
+           throttle_duration_sec=1,
+           )
+
+
+          
+           # get the current waypoint to go towards
+           curr_waypoint = self.waypoints[self.waypoint_ptr]
+           forward_vect = [math.cos(rel_yaw), math.sin(rel_yaw)] # unit vector pointing in robot forward direction
+
+
+           # vector pointing from robot to target waypoint
+           target_vect = [ curr_waypoint[0] - rel_position[0], curr_waypoint[1] - rel_position[1]]
+
+
+           # distance from robot to target way point
+           dist_error = math.sqrt( target_vect[0]**2 + target_vect[1]**2 )
+
+
+           # signed angle from robot forward direction to target waypoint vector
+           angle_error = math.atan2( forward_vect[0]*target_vect[1] - forward_vect[1]*target_vect[0],
+                                   forward_vect[0]*target_vect[0] + forward_vect[1]*target_vect[1] )
+      
+
+
+           if dist_error > 0.3:
+               # robot not at way point => move towards waypoint
+               if angle_error > 0.1:
+                   angular_vel = self.angular_velocity
+
+
+
+
+               elif angle_error < -0.1:
+                   angular_vel = -self.angular_velocity
+
+
+               else:
+                   linear_vel = self.linear_velocity
+
+
+           else:
+               # robot at waypoint => increment waypoint pointer
+               self.waypoint_ptr += 1
+               self.timestamp=time_now#reset time
+              
+               # loop pointer back to start if out of range
+               if self.waypoint_ptr > len(self.waypoints) - 1:
+                   self.waypoint_ptr = 0
+              
+           if elapsed_time > 15 and dist_error >0.3:
+               #its been too long
+               self.waypoint_ptr += 1
+               self.timestamp=time_now#reset time
+               self.get_logger().warn(
+           f"Skipping way point took too long",
+           )
+
+
+
+
+          
+           self.publish_vel(linear_vel, angular_vel)
+       else:
+           self.get_logger().warn(
+           f"IDLE: Not in waypoint state",
+           throttle_duration_sec=10,
+           )
+
+
+
+
+  
+   def pose_callback(self, topic_message: Odometry):
+       # recieve robot odom data
+       pose = topic_message.pose.pose
+  
+       pos_x = pose.position.x
+       pos_y = pose.position.y
+
+
+       self.abs_position = [pos_x, pos_y]
+       self.abs_yaw = self.quaternion_to_euler(pose.orientation)
+
+
+       if self.startup == True:
+           self.init_position = self.abs_position
+           self.init_yaw = self.abs_yaw
+
+
+           self.get_logger().info(
+               f"waypoint initalised with start position "
+               f"x:{self.init_position[0]:.3f}, y:{self.init_position[1]:.3f}, yaw:{self.init_yaw}",
+               throttle_duration_sec = 1,
+           )
+
+
+           self.startup = False
+
+
+    
+   def key_info_callback(self, key_info_message: KeyInfo):
+       # recieve key info data
+       self.key_info=key_info_message
+
+
+       self.get_logger().info(
+           f"state: {self.key_info.state}",
+           throttle_duration_sec=1,
+       )
+
+
+
+
+   def publish_vel(self, linear_velocity, angular_velocity):
+       # publish cmd velocities
+       topic_msg = TwistStamped()
+       topic_msg.twist.linear.x = linear_velocity
+       topic_msg.twist.angular.z = angular_velocity
+       self.vel_publisher.publish(topic_msg)
+
+
+       '''
+       self.get_logger().info(
+           f"Lin_Vel: {topic_msg.twist.linear.x:.2f}, "
+           f"Ang_Vel: {topic_msg.twist.angular.z:.2f}",
+           throttle_duration_sec=1,
+       )
+       '''
+
+
+   def quaternion_to_euler(self, orientation):
+       # convert quaternion rotation to yaw angele
+       x = orientation.x
+       y = orientation.y
+       z = orientation.z
+       w = orientation.w
+
+
+       t3 = +2.0 * (w * z + x * y)
+       t4 = +1.0 - 2.0 * (y * y + z * z)
+       yaw = math.atan2(t3, t4)
+
+
+       return yaw
+
+
+
+
+
+
+def main(args=None):
+   rclpy.init(
+       args=args,
+       signal_handler_options=SignalHandlerOptions.NO
+   )
+
+
+   waypoint_follower = MoveWaypoint()
+   try:
+       rclpy.spin(waypoint_follower)
+   except KeyboardInterrupt:
+       print("Shutdown request (Ctrl+C) detected...")
+   finally:
+       waypoint_follower.publish_vel(0.0,0.0)
+       waypoint_follower.destroy_node()
+       rclpy.shutdown()
+
+
+if __name__ == '__main__':
+   main()
