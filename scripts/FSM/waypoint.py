@@ -11,6 +11,7 @@ from ele434_team15_2026.msg import KeyInfo #import key info as a new type
 
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
+from ele434_team15_2026.msg import LocusArray
 
 class MoveWaypoint(Node): 
 
@@ -57,6 +58,15 @@ class MoveWaypoint(Node):
             topic="cmd_vel",
             qos_profile=10,
         ) 
+
+        #create waypoint topic for obs avoid function to subscribe to
+
+        self.Waypoint_Location = self.create_publisher(
+            msg_type=LocusArray,
+            topic="Waypoint_Locus",
+            qos_profile=10,
+        )
+
 
         # timer for main control loop
         publish_rate = 10 # Hz
@@ -116,6 +126,11 @@ class MoveWaypoint(Node):
             angle_error = math.atan2( forward_vect[0]*target_vect[1] - forward_vect[1]*target_vect[0],
                                     forward_vect[0]*target_vect[0] + forward_vect[1]*target_vect[1] )
         
+            # Publish vector array to topic "Waypoint_Locus" via "Waypoint_location"
+            topic_msg = LocusArray()
+            topic_msg.waypointdistance = dist_error
+            topic_msg.waypointangle = angle_error
+            self.Waypoint_Location.publish(topic_msg)
 
             if dist_error > 0.01:
                 # robot not at way point => move towards waypoint
@@ -178,6 +193,7 @@ class MoveWaypoint(Node):
             throttle_duration_sec=1, 
         ) 
 
+    
 
     def publish_vel(self, linear_velocity, angular_velocity):
         # publish cmd velocities 

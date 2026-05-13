@@ -1,0 +1,2 @@
+float32 waypointdistance
+float32 waypointangle

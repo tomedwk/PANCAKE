@@ -32,6 +32,7 @@ install(PROGRAMS
   scripts/FSM/Manager.py
   scripts/FSM/waypoint.py
   scripts/FSM/vel_control.py
+  scripts/FSM/Pot_Field_Obs_Avoid.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -42,7 +43,8 @@ install(DIRECTORY
 )
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/KeyInfo.msg" 
+  "msg/KeyInfo.msg"
+  "msg/LocusArray.msg" 
 )
 
 ament_package()
