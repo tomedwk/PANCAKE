@@ -17,7 +17,6 @@ from nav_msgs.msg import Odometry
 
 
 
-
 class MoveWaypoint(Node):
 
 
