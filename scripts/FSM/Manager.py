@@ -16,6 +16,7 @@ import numpy as np #Used for data put togethers
 
 from ele434_team15_2026_modules.tb3_tools import quaternion_to_euler 
 from math import sqrt, pow, pi, dist
+from random import random
 
 class BasicObstacle(Node): 
 
@@ -23,14 +24,15 @@ class BasicObstacle(Node):
         super().__init__("basic_obstacle") 
 
         #Tunning values
-        self.linear_vel=0.1 #straight velocity
-        self.angluar_vel=1 #angular velcoity
+        self.linear_vel=0.2 #straight velocity
+        self.angluar_vel=1.0 #angular velcoity
         self.collision_zone_left= 19 #edge of collision zone left
         self.collision_zone_right=-18 #collision zone right
         self.distance_collision=0.4 #distance before object needs to be avoided
         self.turn_done=False #to know whether turn is done
         
         self.collision_min=float("nan")
+    
         self.theta_z = 0.0
         self.theta_zref = 0.0
         self.y_ref=0.0
@@ -53,6 +55,9 @@ class BasicObstacle(Node):
         #self.key_info.vel_trigger="False"
 
         self.distance=0
+        self.turning_angle=40 #Turning angle required- randomised sometimes
+        self.min_turn=30
+        self.max_turn=60
 
 
 
@@ -137,6 +142,9 @@ class BasicObstacle(Node):
                 if self.collision_min < self.distance_collision:
                     self.get_logger().info("Obstacle detected")
                     self.key_info.state ="Obstacle"
+                    random_angle=random()
+                    random_angle=round(random_angle,2)*(self.max_turn-self.min_turn)+self.min_turn
+                    self.turning_angle=random_angle
                     #Set all things before 
                     self.theta_zref=self.theta_z
                     self.x_ref=self.x
@@ -146,7 +154,7 @@ class BasicObstacle(Node):
         elif self.key_info.state == "Obstacle":
             diff = self.theta_z - self.theta_zref
             diff = (diff + pi) % (2 * pi) - pi  # Wrap to [-180°, 180°]
-            if abs(diff) >= (40*pi/180):
+            if abs(diff) >= (self.turning_angle*pi/180):
                 self.theta_zref=self.theta_z
                 self.get_logger().info(f"time to go straight, distance: {self.distance}")
                 self.key_info.state ="Forward"
@@ -179,14 +187,15 @@ class BasicObstacle(Node):
         elif self.key_info.state == "Obstacle":
             #Do obstacle bit
             #Determine Direction to turn
-            for i in 4:
-                self.turn_left = self.turn_left + scan_data.ranges[self.collision_zone_left + self.angle_increment*i]
-                self.turn_right = self.turn_right + scan_data.ranges[self.collision_zone_right - self.angle_increment*i] 
-            #Turn 45 degrees
-            if self.turn_left < self.turn_right: 
-                topic_msg.twist.angular.z=self.angluar_vel
-            else:
-                topic_msg.twist.angular.z=-self.angluar_vel
+            # for i in range(4):
+            #     self.turn_left = self.turn_left + scan_data.ranges[self.collision_zone_left + self.angle_increment*i]
+            #     self.turn_right = self.turn_right + scan_data.ranges[self.collision_zone_right - self.angle_increment*i] 
+            # #Turn 45 degrees
+            # if self.turn_left < self.turn_right: 
+            #     topic_msg.twist.angular.z=self.angluar_vel
+            # else:
+            #     topic_msg.twist.angular.z=-self.angluar_vel
+            topic_msg.twist.angular.z=self.angluar_vel
             topic_msg.twist.linear.x=0.0
             
             #self.key_info.vel_trigger= "Angular"
